@@ -1,0 +1,65 @@
+{% load tz %}
+{% load l10n %}
+<div class="bg-light shadow-sm p-3 my-2 rounded justify-content-center" id="{{instance.name|slugify}}">
+	<h2 class="mb-0">
+		{% if status == 2 %}
+		<i class="bi bi-x-circle-fill text-danger" title="critical"></i>
+		{% elif status == 1 %}
+		<i class="bi bi-exclamation-circle-fill text-warning" title="warning"></i>
+		{% elif status == 0 %}
+		<i class="bi bi-check-circle-fill text-success" title="ok"></i>
+		{% elif status == -1 %}
+		<i class="bi bi-info-circle-fill text-primary" title="info"></i>
+		{% elif status == -2 %}
+		<i class="bi bi-emoji-dizzy-fill text-dark" title="technical issue"></i>
+		{% else %}
+		Status "{{status}}" is not a valid status (between -2 and 2)!
+		{% endif %}
+		{{ instance.verbose_name }}
+	</h2>
+	<p>
+		<small class="text-muted fw-light">
+			{% if timestamp is not None %}<i class="bi bi-calendar-week me-2"></i>{{ timestamp }}{% endif %}
+			<a data-bs-toggle="collapse" href="#infos_for_{{ instance.name }}" role="button">More analysis information</a>
+		</small>
+	</p>
+	{# collapsable additional informations to each instance #}
+	<div class="collapse" id="infos_for_{{ instance.name }}">
+			<table class="table table-sm small table-light">
+				<tbody>
+					<tr>
+						<th>Analysis</th>
+						<td>{{ analysis_name }}</td>
+					</tr>
+					<tr>
+						<th>Instance</th>
+						<td>{{ instance.name }}</td>
+					</tr>
+					<tr>
+						<th>Description</th>
+						<td>{% autoescape off %}{{ instance.description }}{% endautoescape %}</td>
+					</tr>
+					<tr>
+						<th>Status</th>
+						<td>{% if status == 2 %}Critical{% elif status == 1 %}Warning{% elif status == 0 %}Ok{% elif status == -1 %}No status needed for this instance.{% elif status == -2 %}Something went wrong please contact the Happyface developers.{% else %}Status "{{status}}" is not a valid status (between -2 and 2)!{% endif %}</td>
+					</tr>
+					<tr>
+						<th>Data source{% if data_sources|length > 1 %}s{% endif %}</th>
+						<td>{% for src in data_sources %} <a href="{{ src }}">{{ src }}</a><br /> {% endfor %}</td>
+					</tr>
+				</tbody>
+			</table>
+	</div>
+	{% if status == -2 %}
+	<div class="alert alert-danger" role="alert">
+		Something went wrong please contact the Happyface developers.
+	</div>
+	{% endif %}
+	{% if old_data_warning %}
+	<div class="alert alert-warning" role="alert">
+		The data is {{ old_data_warning.hours }} h and {{ old_data_warning.min }} min old.
+	</div>
+	{% endif %}
+	{% block analysis %}{% endblock %}
+</div>
+

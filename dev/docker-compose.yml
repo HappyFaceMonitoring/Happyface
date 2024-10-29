@@ -1,0 +1,71 @@
+name: happyface
+
+services:
+  website:
+    container_name: happyface_website
+    image: test.happyface:dev
+    build:
+      context: ..
+      network: host
+    depends_on:
+      - db
+    env_file:
+      - website.env
+      - db.env
+    networks:
+      - happyface_db_net
+      - happyface_website_net
+    volumes:
+      - static_files_volume:/app/Happyface4/static/
+      - ../HF4-Analyses:/app/HF4-Analyses/:Z
+      - ../Happyface4:/app/Happyface4/:Z
+    command: /app/deploy/start_scripts/start_website.sh
+  getData:
+    container_name: happyface_getData
+    image: test.happyface:dev
+    build:
+      context: ..
+      network: host
+    depends_on:
+      - db
+      - website
+    env_file:
+      - website.env
+      - db.env
+    networks:
+      - happyface_db_net
+    command: /app/deploy/start_scripts/start_getData.sh
+  db:
+    container_name: happyface_db
+    image: postgres:16
+    shm_size: 1g
+    volumes:
+      - db_volume:/var/lib/postgresql/data/
+    env_file: db.env
+    networks:
+      - happyface_db_net
+  nginx:
+    container_name: happyface_nginx
+    build:
+      context: nginx
+      dockerfile: Dockerfile.nginx
+    ports:
+      - "8080:80"
+    env_file:
+      - website.env
+    depends_on:
+      - website
+    networks:
+      - happyface_website_net
+    volumes:
+      - static_files_volume:/usr/share/nginx/html:ro
+
+volumes:
+  static_files_volume:
+  db_volume:
+
+networks:
+  happyface_db_net:
+    name: happyface_db_net
+  happyface_website_net:
+    name: happyface_website_net

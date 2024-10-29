@@ -1,0 +1,48 @@
+{% extends 'index.html' %}
+{% block content %}
+    {% load tz %}
+    {% load l10n %}
+    <div class="bg-light shadow-sm p-3 my-2 rounded justify-content-center" id="{{ instance.name }}">
+        <h2 class="mb-0">Overview</h2>
+        {% if form is not None %}
+            <p class="text-muted">
+                <small><i class="bi bi-calendar-week me-2"></i>{{ time }}</small>
+            </p>
+        {% endif %}
+        <div class="container-fluid px-0">
+            <div class="row align-items-center my-2">
+                <div class="col-lg-2"></div>
+                {% for timestep in statuses.0.statuses_list  %}
+                    <div class="col p-0">
+                        {% cycle timestep.time|date:"H:i" "" "" "" "" "" "" "" %}
+                    </div>
+                {% endfor %}
+                {% resetcycle %}
+            </div>
+            {% for cat in statuses %}
+                <div class="shadow-sm rounded-sm mb-2 px-3 py-2">
+                    <div class="row">
+                        <div class="col-lg-2 bg-light color-box rounded-sm d-flex align-items-center" href="#collapse_status_{{ cat.name|slugify }}" data-bs-toggle="collapse">{{ cat.name }}<i class="fbi bi-chevron-down ms-auto"></i></div>
+                        {% for timestep in cat.statuses_list %}
+                            <a class="col p-0 pe-1 color-box" href="{% url 'index' cat.name %}?date={{ timestep.time|date:'Y-m-d' }}&amp;time={{ timestep.time|date:'H:i' }}" data-bs-toggle="tooltip" data-bs-html="true" data-placement="bottom" data-html="true" title="<b>{{ timestep.time|date:'d.m.Y, H:i' }}</b><br>{% if timestep.status == 2 %}critical{% elif timestep.status == 1 %}warning{% elif timestep.status == 0 %}ok{% elif timestep.status == -2 %}something went wrong please contact the developers{% endif %}">
+                                <div class="" style="height: 40px; {% if timestep.status == 2 %}background-color: #dc3545;{% elif timestep.status == 1 %}background-color: #ffc107;{% elif timestep.status == 0 %}background-color: #9ed7ab;{% elif timestep.status == -1 %}background-color: #0D6EFD;{% elif timestep.status == -2 %}background-color: #212529;{% endif %}"></div>
+                            </a>{% endfor %}{% resetcycle %}
+                    </div>
+                    <div class="collapse small" id="collapse_status_{{ cat.name|slugify }}">
+                    <hr class="my-2">
+                    {% for inst in cat.instances %}
+                        <div class="row align-items-center category-link">
+                            <div class="col-lg-2 ps-4">{{ inst.verbose_name }}</div>
+                            {% for timestep in inst.status %}
+                                <a class="col p-0 pe-1 color-box py-1" href="{% url 'index' cat.name %}?date={{ timestep.time|date:'Y-m-d' }}&amp;time={{ timestep.time|date:'H:i' }}#{{ inst.name }}" data-bs-toggle="tooltip" data-bs-html="true" data-placement="bottom" data-html="true" title="<b>{{ timestep.time|date:'d.m.Y, H:i' }}</b><br>{% if timestep.status == 2 %}critical{% elif timestep.status == 1 %}warning{% elif timestep.status == 0 %}ok{% elif timestep.status == -2 %}something went wrong please contact the developers{% endif %}">
+                                    <div class="" style="height: 20px; {% if timestep.status == 2 %}background-color: #dc3545;{% elif timestep.status == 1 %}background-color: #ffc107;{% elif timestep.status == 0 %}background-color: #9ed7ab;{% elif timestep.status == -1 %}background-color: #0D6EFD;{% elif timestep.status == -2 %}background-color: #212529;{% endif %}"></div>
+                                </a>{% endfor %}{% resetcycle %}
+                        </div>
+                        <hr class="my-1">
+                    {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

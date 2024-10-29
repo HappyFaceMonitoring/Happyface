@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+{% load tz %}
+{% load l10n %}
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  {% load static %}
+  <!-- Bootstrap CSS --> {% comment %} https://getbootstrap.com/docs/5.2/getting-started/download/ {% endcomment %}
+  <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet" />
+  <!--some Icons--> {% comment %}v1.8.3 https://icons.getbootstrap.com/{% endcomment %}
+  <link rel="stylesheet" href="{% static 'css/bootstrap-icons-1.8.3/bootstrap-icons.css' %}" />
+  <!-- timepicker --> {% comment %}https://www.jonthornton.com/jquery-timepicker/{% endcomment %}
+  <link href="{% static 'css/jquery.timepicker.min.css' %}" rel="stylesheet" />
+  <!-- datatables --> {% comment %}https://datatables.net/{% endcomment %}
+  <link href="{% static 'css/datatables.min.css' %}" rel="stylesheet" />
+  <!-- Custom CSS -->
+  <link href="{% static 'css/happyface.css' %}" rel="stylesheet" />
+  <!-- JQuery --> {% comment %}v3.6.2 https://jquery.com/ {% endcomment %}
+  <script src="{% static 'js/jquery-3.6.2.min.js' %}"></script>
+  <!-- bootstrap-select -->
+  <link href="{% static 'css/bootstrap-select.min.css' %}" rel="stylesheet" />
+  <!--Chart.js--> {% comment %}v3.8.0 https://www.chartjs.org/ {% endcomment %}
+  <script src="{% static 'js/chart.min.js' %}"></script>
+  <script src="{% static 'js/chartjs-adapter-date-fns.bundle.min.js' %}"></script>
+  <!--D3.js--> {% comment %}v7.8.5 https://d3js.org{% endcomment %}
+  <script src="{% static 'js/d3.v7.min.js' %}"></script>
+  <title>Monitoring</title>
+  <link rel="shortcut icon" type="image/png" href="{% get_media_prefix %}favicon.ico" />
+  {% if reload %}<meta http-equiv="refresh" content="900"><!--Reload page every 15min-->{% endif %}
+</head>
+
+<body class="light-green">
+  <form id="history" class="form-inline me-sm-4">
+    <div class="input-group input-group-sm">
+      <a class="btn btn-info" href="{{ request.path }}" role="button">
+        Now
+      </a>
+      {{ form.date }} {# this form elements are generated in the forms.py #}
+      {{ form.time }}
+      <button type="submit" class="btn btn-primary">Search</button>
+    </div>
+  </form>
+  <header class="navbar fixed-top p-0 shadow">
+    <a class="navbar-brand px-3 me-auto" href="{% url 'home' %}"><img class="pb-1" src="{% get_media_prefix %}logo.png"
+        width="30" hight="30" alt="logo" /> Monitoring</a>
+    <a class="btn btn-outline-light border-0 px-2 py-0 mx-1 {% if reload %}active{% endif %}" role="button" href="{{ request.path }}{% if not reload %}?reload=true{% endif %}" title="Refresh page automatically every 15min">
+      <i class="bi bi-arrow-repeat fs-4"></i>
+    </a>
+    <button class="btn btn-outline-light border-0 px-4 py-0" type="button" onclick="collapse('history')">
+      <i class="bi bi-calendar-week fs-4"></i>
+    </button>
+  </header>
+  <nav id="sidebar" class="pt-5 shadow vis">
+    <button class="btn btn-sm btn-light" type="button" onclick="collapse('sidebar')">
+      <i class="bi bi-list fs-5"></i>
+    </button>
+    {% comment %} Creates menu items in the navigation bar. Depending on
+    the alarm level, the font gets a different color and a different icon,
+    the if query is responsible for this. In the url the if query is also
+    used to check whether the user has already selected a different time.
+    So that this time can still be used in other categories, this time is
+    appended to the links. {% endcomment %}
+    <span class="d-inline-block w-100 text-center mt-3">
+      {{ time|date:"D d.n.Y, G:i" }}
+    </span>
+    <hr class="w-75 mx-auto">
+    <ul class="nav flex-column">
+      {% for cat in statuses %}
+      {% with '/'|add:cat.name|add:'/' as cat_path %}
+      <li class="nav-item w-100" {% if cat_path in request.path %}style="background-color: #E3E4E6" {% endif %}>
+        <div class="d-flex">
+          <a class="col nav-link text-truncate"
+            href="{% url 'index' cat.name %}{% if link_date %}?date={{link_date|date:'Y-m-d'}}&amp;time={{link_date|time:'H:i'}}{% endif %}">
+            {% if cat.latest_status == 2 %}
+            <i class="bi bi-x-circle-fill text-danger" title="critical"></i>
+            {% elif cat.latest_status == 1 %}
+            <i class="bi bi-exclamation-circle-fill text-warning" title="warning"></i>
+            {% elif cat.latest_status == 0 %}
+            <i class="bi bi-check-circle-fill text-success" title="ok"></i>
+            {% elif cat.latest_status == -1 %}
+            <i class="bi bi-info-circle-fill text-primary" title="info"></i>
+            {% elif cat.latest_status == -2 %}
+            <i class="bi bi-emoji-dizzy-fill text-dark" title="technical issue"></i>
+            {% else %}
+            Status {{ cat.latest_status }} is not a valid status (between -2 and 2)!
+            {% endif %}
+            {{ cat.name }}
+          </a>
+          <div class="col-auto">
+            <button class="btn btn-outline-secondary border-0 px-2 py-1" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMenu_{{cat.name|slugify}}"
+              aria-expanded="false" aria-controls="collapseMenu_{{cat.name|slugify}}">
+              <i class="bi bi-chevron-down"></i>
+            </button>
+          </div>
+        </div>
+        <div class="collapse {% if cat_path in request.path %}show{% endif %}" id="collapseMenu_{{cat.name|slugify}}">
+          <ul class="nav flex-column">
+            {% for instance in cat.instances %}
+            <li class="w-100 small">
+              <a href="{% url 'index' cat.name %}{% if link_date %}?date={{link_date|date:'Y-m-d'}}&amp;time={{link_date|time:'H:i'}}{% endif %}#{{ instance.name|slugify }}"
+              {% if instance.latest_status == 2 %}
+              class="nav-link text-danger text-truncate">
+                <i class="bi bi-x-circle-fill" title="critical"></i>
+              {% elif instance.latest_status == 1 %}
+              class="nav-link text-warning text-truncate">
+                <i class="bi bi-exclamation-circle-fill" title="warning"></i>
+              {% elif instance.latest_status == 0 %}
+              class="nav-link text-success text-truncate">
+              <i class="bi bi-check-circle-fill" title="ok"></i>
+              {% elif instance.latest_status == -1 %}
+              class="nav-link text-primary text-truncate">
+                <i class="bi bi-info-circle-fill" title="info"></i>
+              {% elif instance.latest_status == -2 %}
+              class="nav-link text-dark text-truncate">
+                <i class="bi bi-emoji-dizzy-fill" title="technical issue"></i>
+              {% else %}
+              >
+              Status {{ instance.latest_status }} is not a valid status (between -2 and 2)!
+              {% endif %}
+              {{ instance.verbose_name }}
+              </a>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </li>
+      {% endwith %}
+      {% endfor %}
+    </ul>
+    <div class="ms-3 fixed-bottom">
+      <div style="font-size:10pt; position: relative; bottom: 10pt;">
+          {% if documentation_url and documentation_url.strip %}
+            <a href="{{ documentation_url }}" target="_blank" rel="noopener noreferrer" class="link-secondary">Documentation</a> &middot;
+          {% endif %}
+        <a href="{{ legals_url }}" target="_blank" rel="noopener noreferrer" class="link-secondary">Legals</a> &middot;
+        Build: <a href="https://github.com/HappyFaceMonitoring/Happyface/commit/{{ commit_sha }}" target="_blank" rel="noopener noreferrer" class="link-secondary">{{ commit_sha|slice:":7" }}</a>
+      </div>
+    </div>
+  </nav>
+  <main class="pt-5 px-lg-4">
+    {% block content %}
+    {% for div in divs %}
+    {{div}}
+    {% endfor %}
+    {% endblock %}
+  </main>
+
+  <!-- Bootstrap JS with Popper JS -->
+  <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+  <!-- Timepicker --> {% comment %}v1.3.5 https://github.com/wvega/timepicker {% endcomment %}
+  <script src="{% static 'js/jquery.timepicker.min.js' %}"></script>
+  <!-- Datatables --> {% comment %}v1.13.1 https://datatables.net/ {% endcomment %}
+  <script src="{% static 'js/datatables.min.js' %}"></script>
+  <!-- Bootstrap-select -->
+  {% comment %} bootstrap-select is taken from https://github.com/snapappointments/bootstrap-select/blob/881aef66b884779614ee0be1e753e3955ec471fd/js/bootstrap-select.js {% endcomment %}
+  <script src="{% static 'js/bootstrap-select-bs5.js' %}"></script>
+  <!-- Custom javascript -->
+  <script src="{% static 'js/happyface.js' %}"></script>
+  <!-- activate timepicker --> {% comment %}https://www.jonthornton.com/jquery-timepicker/{% endcomment %}
+  <script>
+    $('#time-input').timepicker({'step':15, 'timeFormat':'H:i', 'closeOnWindowScroll':true, 'scrollDefault':'{{ time|date:"H:i" }}', 'selectOnBlur':true});
+  </script>
+</body>
+
+</html>

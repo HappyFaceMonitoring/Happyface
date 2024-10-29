@@ -1,0 +1,7 @@
+Django==5.1.2       # the Django library
+gunicorn            # the wsgi application to deploy Django
+pyyaml              # YAML support in Python
+djangorestframework # REST API support in Django
+psycopg[binary]     # PostgreSQL for Python, pre compiled
+requests            # simple HTTP library to fetch data from web
+pycurl              # Python interface to libcurl. Perfect to access REST APIs.

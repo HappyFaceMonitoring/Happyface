@@ -1,0 +1,126 @@
+/*
+* Colors
+*/
+.light-green header {
+  background-color: #00a65a;
+  color: #fff;
+}
+
+.light-green header a {
+  color: #fff;
+}
+.light-green nav a:hover,
+.light-green header a:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.light-green a:focus {
+  box-shadow: none;
+}
+
+.light-green nav {
+  background-color: #f9fafc;
+  color: #444;
+}
+
+.light-green nav .nav-link {
+  color: #444;
+}
+
+.light-green nav ul ul {
+  background-color: #f4f4f5;
+}
+
+/*
+* collapsible sidebar
+*/
+#sidebar {
+  min-width: 300px;
+  max-width: 300px;
+  position: fixed;
+  top: 0px;
+  bottom: 0;
+  left: -300px;
+  z-index: 3;
+  transition: left 0.5s ease-out;
+  overflow-y: scroll;
+  scrollbar-width: none;
+}
+#sidebar > button {
+  opacity: 0.7;
+  position: fixed;
+  left: 0px;
+  box-shadow: none;
+  margin-left: 5px;
+  transition: left 0.5s ease-out;
+}
+#sidebar > button:hover {
+  opacity: 1;
+}
+#sidebar.vis {
+  left: 0;
+}
+
+#sidebar.vis > button {
+  left: 300px;
+}
+
+main {
+  margin-left: 0px;
+  transition: margin-left 0.5s ease-out;
+}
+
+#sidebar.vis + main {
+  margin-left: 300px;
+}
+
+@media (max-width: 1140px) {
+  #sidebar{
+    left: 0px;
+  }
+  #sidebar.vis{
+    left: -300px;
+  }
+  #sidebar > button{
+    left: 300px;
+  }
+  #sidebar.vis > button{
+    left: 0px;
+  }
+  main {
+    position: relative;
+    left: 300px;
+    margin-left: 0px !important;
+    transition: left 0.5s ease-out;
+  }
+  #sidebar.vis + main {
+    left: 0px;
+  }
+
+}
+
+/** 
+* collapsible history
+*/
+#history {
+  position: fixed;
+  top: -20px;
+  right: 0px;
+  transition: top 0.3s ease-out;
+  z-index: 3;
+  /* max-width: 100px; */
+}
+#history.vis {
+  /* max-height: 40px; */
+  top: 50px;
+}
+
+/**
+* some css for the startpage
+*/
+.color-box:hover {
+  filter: brightness(85%);
+}
+ .category-link:hover {
+  background-color: #eeeff0;
+}
